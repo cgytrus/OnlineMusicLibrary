@@ -2,6 +2,14 @@ using Microsoft.EntityFrameworkCore;
 
 using OnlineMusicLibrary;
 
+using TagLib;
+
+using YoutubeDLSharp;
+
+using File = System.IO.File;
+
+//await YoutubeDLSharp.Utils.DownloadBinaries();
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ApplicationDbContext>();
@@ -68,7 +76,7 @@ trackGroup.MapGet("/{id}/art", async (ApplicationDbContext db, uint id) =>
 trackGroup.MapGet("/{id}/lyrics", async (ApplicationDbContext db, uint id) =>
     await db.tracks.FindAsync(id) is { } track ?
         track.lyrics is { } lyrics ?
-            Results.Ok(lyrics) :
+            Results.Text(lyrics, "text/plain") :
             Results.NotFound():
         Results.NotFound());
 trackGroup.MapGet("/{id}/download", async (HttpContext ctx, ApplicationDbContext db, uint id) => {
@@ -76,7 +84,52 @@ trackGroup.MapGet("/{id}/download", async (HttpContext ctx, ApplicationDbContext
     if (user is null)
         return Results.Unauthorized();
 
-    return Results.Ok("todo");
+    if (await db.tracks.FindAsync(id) is not { } track)
+        return Results.NotFound();
+
+    YoutubeDL ytdl = new(1);
+
+    RunResult<string> res = await ytdl.RunAudioDownload(track.download);
+    if (!res.Success)
+        return Results.Problem(string.Join('\n', res.ErrorOutput), null, 500, "Error downloading audio");
+    string path = res.Data;
+
+    TagLib.File? file;
+    try { file = TagLib.File.Create(path); }
+    catch (Exception ex) {
+        return Results.Problem(ex.ToString(), null, 500, "Error reading metadata");
+    }
+    if (file is null)
+        return Results.Problem("file is null", null, 500, "Error reading metadata");
+
+    try {
+        file.Tag.Title = track.title;
+        file.Tag.Performers = new[] { track.artist };
+        file.Tag.Album = track.album;
+        file.Tag.AlbumArtists = new[] { track.albumArtist };
+        file.Tag.Year = track.year;
+        if (!string.IsNullOrWhiteSpace(track.genre))
+            file.Tag.Genres = new[] { track.genre };
+        if (track.HasArt())
+            file.Tag.Pictures = new IPicture[] { new Picture(track.artPath) };
+        file.Tag.Track = track.trackNumber;
+        file.Tag.TrackCount = track.trackCount;
+        file.Tag.Disc = track.discNumber;
+        file.Tag.DiscCount = track.discCount;
+
+        file.Save();
+    }
+    catch (Exception ex) {
+        return Results.Problem(ex.ToString(), null, 500, "Error writing metadata");
+    }
+
+    await Results.File(path, file.MimeType, $"{track.artist} - {track.title}{Path.GetExtension(path)}")
+        .ExecuteAsync(ctx);
+
+    if (File.Exists(path))
+        File.Delete(path);
+
+    return Results.Empty;
 });
 trackGroup.MapDelete("/{id}", async (HttpContext ctx, ApplicationDbContext db, uint id) => {
     User? user = await TryAuthorize(ctx, db);

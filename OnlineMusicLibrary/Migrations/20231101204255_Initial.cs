@@ -36,6 +36,13 @@ namespace OnlineMusicLibrary.Migrations
                     artist = table.Column<string>(type: "TEXT", nullable: false),
                     album = table.Column<string>(type: "TEXT", nullable: false),
                     albumArtist = table.Column<string>(type: "TEXT", nullable: false),
+                    albumHash = table.Column<string>(type: "TEXT", nullable: false),
+                    year = table.Column<uint>(type: "INTEGER", nullable: false),
+                    genre = table.Column<string>(type: "TEXT", nullable: false),
+                    trackNumber = table.Column<uint>(type: "INTEGER", nullable: false),
+                    trackCount = table.Column<uint>(type: "INTEGER", nullable: false),
+                    discNumber = table.Column<uint>(type: "INTEGER", nullable: false),
+                    discCount = table.Column<uint>(type: "INTEGER", nullable: false),
                     lyrics = table.Column<string>(type: "TEXT", nullable: false),
                     listen = table.Column<string>(type: "TEXT", nullable: false),
                     download = table.Column<string>(type: "TEXT", nullable: false)

@@ -63,7 +63,17 @@ namespace OnlineMusicLibrary.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<uint>("discCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<uint>("discNumber")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("download")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("genre")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -79,9 +89,18 @@ namespace OnlineMusicLibrary.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<uint>("trackCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<uint>("trackNumber")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("username")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<uint>("year")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("id");
 

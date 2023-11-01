@@ -10,7 +10,7 @@ using OnlineMusicLibrary;
 namespace OnlineMusicLibrary.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20231101183607_Initial")]
+    [Migration("20231101204255_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -58,11 +58,25 @@ namespace OnlineMusicLibrary.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("albumHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("artist")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<uint>("discCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<uint>("discNumber")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("download")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("genre")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -78,9 +92,18 @@ namespace OnlineMusicLibrary.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<uint>("trackCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<uint>("trackNumber")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("username")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<uint>("year")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("id");
 

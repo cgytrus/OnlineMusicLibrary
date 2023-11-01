@@ -7,7 +7,6 @@ using JetBrains.Annotations;
 
 using Microsoft.EntityFrameworkCore;
 
-using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.Formats.Jpeg;
 
 namespace OnlineMusicLibrary;
@@ -22,6 +21,12 @@ public class Track {
     public required string album { get; set; }
     public required string albumArtist { get; set; }
     public required string albumHash { get; set; }
+    public required uint year { get; set; }
+    public required string genre { get; set; }
+    public required uint trackNumber { get; set; }
+    public required uint trackCount { get; set; }
+    public required uint discNumber { get; set; }
+    public required uint discCount { get; set; }
     public required string lyrics { get; set; }
     public required string listen { get; set; }
     public required string download { get; set; }
@@ -29,7 +34,7 @@ public class Track {
     public string artPath => GetArtPath(albumHash);
     public bool HasArt() => File.Exists(artPath);
 
-    public static string GetAlbumHash(string album, string albumArtist) => Convert
+    private static string GetAlbumHash(string album, string albumArtist) => Convert
         .ToHexString(Crc32.Hash(Encoding.Unicode.GetBytes($"{album}{albumArtist}")))
         .ToLowerInvariant();
 
@@ -83,6 +88,12 @@ public class Track {
         public string? album { get; init; }
         public string? albumArtist { get; init; }
         public required string art { get; init; }
+        public required uint year { get; init; }
+        public string? genre { get; init; }
+        public uint? trackNumber { get; set; }
+        public uint? trackCount { get; set; }
+        public uint? discNumber { get; set; }
+        public uint? discCount { get; set; }
         public string? lyrics { get; init; }
         public required string listen { get; init; }
         public string? download { get; init; }
@@ -95,6 +106,12 @@ public class Track {
                 album = album ?? title,
                 albumArtist = albumArtist ?? artist,
                 albumHash = GetAlbumHash(album ?? title, albumArtist ?? artist),
+                year = year,
+                genre = genre ?? "",
+                trackNumber = trackNumber ?? 1,
+                trackCount = trackCount ?? 1,
+                discNumber = discNumber ?? 1,
+                discCount = discCount ?? 1,
                 lyrics = lyrics ?? "",
                 listen = listen,
                 download = download ?? listen
@@ -113,10 +130,17 @@ public class Track {
         public string? album { get; init; }
         public string? albumArtist { get; init; }
         public string? art { get; init; }
+        public uint? year { get; init; }
+        public string? genre { get; init; }
+        public uint? trackNumber { get; set; }
+        public uint? trackCount { get; set; }
+        public uint? discNumber { get; set; }
+        public uint? discCount { get; set; }
         public string? lyrics { get; init; }
         public string? listen { get; init; }
         public string? download { get; init; }
 
+        // ReSharper disable once CognitiveComplexity
         public async Task MergeInto(Track track) {
             if (title is not null)
                 track.title = title;
@@ -133,6 +157,18 @@ public class Track {
                 track.albumHash = GetAlbumHash(track.album, track.albumArtist);
                 track.CopyArt(prevAlbumHash);
             }
+            if (year.HasValue)
+                track.year = year.Value;
+            if (genre is not null)
+                track.genre = genre;
+            if (trackNumber.HasValue)
+                track.trackNumber = trackNumber.Value;
+            if (trackCount.HasValue)
+                track.trackCount = trackCount.Value;
+            if (discNumber.HasValue)
+                track.discNumber = discNumber.Value;
+            if (discCount.HasValue)
+                track.discCount = discCount.Value;
             if (lyrics is not null)
                 track.lyrics = lyrics;
             if (listen is not null)
@@ -144,12 +180,18 @@ public class Track {
 
     [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
     public class GetDto {
-        public uint id { get; init; }
-        public string title { get; set; }
-        public string artist { get; set; }
-        public string album { get; set; }
-        public string albumArtist { get; set; }
-        public string listen { get; set; }
+        public uint id { get; }
+        public string title { get; }
+        public string artist { get; }
+        public string album { get; }
+        public string albumArtist { get; }
+        public uint year { get; }
+        public string genre { get; }
+        public uint trackNumber { get; }
+        public uint trackCount { get; }
+        public uint discNumber { get; }
+        public uint discCount { get; }
+        public string listen { get; }
 
         public GetDto(Track track) {
             id = track.id;
@@ -157,6 +199,12 @@ public class Track {
             artist = track.artist;
             album = track.album;
             albumArtist = track.albumArtist;
+            year = track.year;
+            genre = track.genre;
+            trackNumber = track.trackNumber;
+            trackCount = track.trackCount;
+            discNumber = track.discNumber;
+            discCount = track.discCount;
             listen = track.listen;
         }
     }
