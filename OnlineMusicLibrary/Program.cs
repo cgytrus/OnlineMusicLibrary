@@ -52,6 +52,9 @@ trackGroup.MapPut("/{id}", async (HttpContext ctx, ApplicationDbContext db, uint
     if (await db.tracks.FindAsync(id) is not { } track)
         return Results.NotFound();
 
+    if (track.username != user.username)
+        return Results.Unauthorized();
+
     string prevAlbumHash = track.albumHash;
     string prevArtPart = track.artPath;
 
@@ -139,6 +142,9 @@ trackGroup.MapDelete("/{id}", async (HttpContext ctx, ApplicationDbContext db, u
     if (await db.tracks.FindAsync(id) is not { } track)
         return Results.NotFound();
 
+    if (track.username != user.username)
+        return Results.Unauthorized();
+
     string prevAlbumHash = track.albumHash;
     string prevArtPath = track.artPath;
 
@@ -169,8 +175,13 @@ playlistGroup.MapPut("/{id}", async (HttpContext ctx, ApplicationDbContext db, u
 
     if (await db.playlists.FindAsync(id) is not { } playlist)
         return Results.NotFound();
+
+    if (playlist.username != user.username)
+        return Results.Unauthorized();
+
     input.MergeInto(playlist);
     await db.SaveChangesAsync();
+
     return Results.NoContent();
 });
 playlistGroup.MapPut("/{id}/{trackId}", async (HttpContext ctx, ApplicationDbContext db, uint id, uint trackId) => {
@@ -180,8 +191,13 @@ playlistGroup.MapPut("/{id}/{trackId}", async (HttpContext ctx, ApplicationDbCon
 
     if (await db.playlists.FindAsync(id) is not { } playlist)
         return Results.NotFound();
+
+    if (playlist.username != user.username)
+        return Results.Unauthorized();
+
     playlist.tracks = string.Join(',', playlist.tracks.Split(',').Append(trackId.ToString()).ToArray());
     await db.SaveChangesAsync();
+
     return Results.NoContent();
 });
 playlistGroup.MapGet("/{id}", async (ApplicationDbContext db, uint id) =>
@@ -195,8 +211,13 @@ playlistGroup.MapDelete("/{id}", async (HttpContext ctx, ApplicationDbContext db
 
     if (await db.playlists.FindAsync(id) is not { } playlist)
         return Results.NotFound();
+
+    if (playlist.username != user.username)
+        return Results.Unauthorized();
+
     db.playlists.Remove(playlist);
     await db.SaveChangesAsync();
+
     return Results.NoContent();
 });
 playlistGroup.MapDelete("/{id}/{trackId}", async (HttpContext ctx, ApplicationDbContext db, uint id, uint trackId) => {
@@ -206,8 +227,13 @@ playlistGroup.MapDelete("/{id}/{trackId}", async (HttpContext ctx, ApplicationDb
 
     if (await db.playlists.FindAsync(id) is not { } playlist)
         return Results.NotFound();
+
+    if (playlist.username != user.username)
+        return Results.Unauthorized();
+
     playlist.tracks = string.Join(',', playlist.tracks.Split(',').Where(x => x != trackId.ToString()));
     await db.SaveChangesAsync();
+
     return Results.NoContent();
 });
 
