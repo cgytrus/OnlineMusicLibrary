@@ -88,7 +88,7 @@ public class Track {
         public string? album { get; init; }
         public string? albumArtist { get; init; }
         public required string art { get; init; }
-        public required uint year { get; init; }
+        public uint? year { get; init; }
         public string? genre { get; init; }
         public uint? trackNumber { get; set; }
         public uint? trackCount { get; set; }
@@ -106,7 +106,7 @@ public class Track {
                 album = album ?? title,
                 albumArtist = albumArtist ?? artist,
                 albumHash = GetAlbumHash(album ?? title, albumArtist ?? artist),
-                year = year,
+                year = year ?? 0,
                 genre = genre ?? "",
                 trackNumber = trackNumber ?? 1,
                 trackCount = trackCount ?? 1,
