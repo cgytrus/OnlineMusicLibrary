@@ -100,10 +100,15 @@ trackGroup.MapGet("/{id}/download", async (HttpContext ctx, ApplicationDbContext
     TagLib.File? file;
     try { file = TagLib.File.Create(path); }
     catch (Exception ex) {
+        if (File.Exists(path))
+            File.Delete(path);
         return Results.Problem(ex.ToString(), null, 500, "Error reading metadata");
     }
-    if (file is null)
+    if (file is null) {
+        if (File.Exists(path))
+            File.Delete(path);
         return Results.Problem("file is null", null, 500, "Error reading metadata");
+    }
 
     try {
         file.Tag.Title = track.title;
@@ -123,6 +128,8 @@ trackGroup.MapGet("/{id}/download", async (HttpContext ctx, ApplicationDbContext
         file.Save();
     }
     catch (Exception ex) {
+        if (File.Exists(path))
+            File.Delete(path);
         return Results.Problem(ex.ToString(), null, 500, "Error writing metadata");
     }
 
