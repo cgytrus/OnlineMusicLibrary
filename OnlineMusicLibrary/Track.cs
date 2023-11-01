@@ -33,16 +33,14 @@ public class Track {
 
     public string artPath => GetArtPath(albumHash);
     public bool HasArt() => File.Exists(artPath);
-
     private static string GetAlbumHash(string album, string albumArtist) => Convert
         .ToHexString(Crc32.Hash(Encoding.Unicode.GetBytes($"{album}{albumArtist}")))
         .ToLowerInvariant();
-
-    private const int MaxArtSize = 1200;
-
     private static string GetArtPath(string albumHash) => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OnlineMusicLibrary",
         $"{albumHash}.jpg");
+
+    private const int MaxArtSize = 1200;
 
     private async Task SaveArt(string base64) {
         string? artDir = Path.GetDirectoryName(artPath);
