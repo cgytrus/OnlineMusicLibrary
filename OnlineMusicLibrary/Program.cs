@@ -15,22 +15,31 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApplicationDbContext>();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+builder.Services.AddCors(options => {
+    options.AddDefaultPolicy(policy => {
+        policy.AllowAnyOrigin();
+        policy.AllowAnyHeader();
+        policy.AllowAnyMethod();
+    });
+});
+
 WebApplication app = builder.Build();
+
+app.UseCors();
 
 RouteGroupBuilder userGroup = app.MapGroup("/user");
 userGroup.MapGet("/{username}/tracks", (ApplicationDbContext db, string username) => {
-    return db.tracks
+    return Results.Ok(db.tracks
         .Where(x => x.username == username)
         .AsEnumerable()
         .Select(x => new Track.GetDto(x))
-        .ToArray();
+        .ToArray());
 });
-userGroup.MapGet("/{username}/playlists", (ApplicationDbContext db, string username) => {
-    return db.playlists
+userGroup.MapGet("/{username}/playlists", async (ApplicationDbContext db, string username) => {
+    return Results.Ok(await db.playlists
         .Where(x => x.username == username)
-        .AsEnumerable()
-        .Select(x => new Playlist.GetDto(db, x))
-        .ToArray();
+        .Select(x => x.id)
+        .ToArrayAsync());
 });
 
 RouteGroupBuilder trackGroup = app.MapGroup("/track");
@@ -80,7 +89,7 @@ trackGroup.MapGet("/{id}/lyrics", async (ApplicationDbContext db, uint id) =>
     await db.tracks.FindAsync(id) is { } track ?
         track.lyrics is { } lyrics ?
             Results.Text(lyrics, "text/plain") :
-            Results.NotFound():
+            Results.NotFound() :
         Results.NotFound());
 trackGroup.MapGet("/{id}/download", async (HttpContext ctx, ApplicationDbContext db, uint id) => {
     User? user = await TryAuthorize(ctx, db);
