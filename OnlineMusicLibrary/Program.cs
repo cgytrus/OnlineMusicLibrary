@@ -202,7 +202,9 @@ playlistGroup.MapPut("/{id}/{trackId}", async (HttpContext ctx, ApplicationDbCon
     if (playlist.username != user.username)
         return Results.Unauthorized();
 
-    playlist.tracks = string.Join(',', playlist.tracks.Split(',').Append(trackId.ToString()).ToArray());
+    playlist.tracks = string.IsNullOrWhiteSpace(playlist.tracks) ?
+        trackId.ToString() :
+        string.Join(',', playlist.tracks.Split(',').Append(trackId.ToString()).ToArray());
     await db.SaveChangesAsync();
 
     return Results.NoContent();
