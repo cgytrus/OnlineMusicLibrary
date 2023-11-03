@@ -145,7 +145,8 @@ trackGroup.MapGet("/{id}/download", async (HttpContext ctx, ApplicationDbContext
         return Results.Problem(ex.ToString(), null, 500, "Error writing metadata");
     }
 
-    await Results.File(path, null, $"{track.artist} - {track.title}{Path.GetExtension(path)}")
+    string mimeType = file.MimeType.Replace("taglib", "audio");
+    await Results.File(path, mimeType, $"{track.artist} - {track.title}{Path.GetExtension(path)}")
         .ExecuteAsync(ctx);
 
     if (File.Exists(path))
