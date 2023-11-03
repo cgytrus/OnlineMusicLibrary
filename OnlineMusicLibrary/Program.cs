@@ -28,7 +28,9 @@ WebApplication app = builder.Build();
 
 app.UseCors();
 
-RouteGroupBuilder userGroup = app.MapGroup("/user");
+RouteGroupBuilder baseGroup = app.MapGroup("/music/v1");
+
+RouteGroupBuilder userGroup = baseGroup.MapGroup("/user");
 userGroup.MapGet("/verify", async (HttpContext ctx, ApplicationDbContext db) =>
     await TryAuthorize(ctx, db) is null ? Results.Text("Invalid token") : Results.Text(""));
 userGroup.MapGet("/{username}/tracks", (ApplicationDbContext db, string username) => {
@@ -45,7 +47,7 @@ userGroup.MapGet("/{username}/playlists", async (ApplicationDbContext db, string
         .ToArrayAsync());
 });
 
-RouteGroupBuilder trackGroup = app.MapGroup("/track");
+RouteGroupBuilder trackGroup = baseGroup.MapGroup("/track");
 trackGroup.MapPost("/", async (HttpContext ctx, ApplicationDbContext db, Track.CreateDto input) => {
     User? user = await TryAuthorize(ctx, db);
     if (user is null)
@@ -177,7 +179,7 @@ trackGroup.MapDelete("/{id}", async (HttpContext ctx, ApplicationDbContext db, u
     return Results.NoContent();
 });
 
-RouteGroupBuilder playlistGroup = app.MapGroup("/playlist");
+RouteGroupBuilder playlistGroup = baseGroup.MapGroup("/playlist");
 playlistGroup.MapPost("/", async (HttpContext ctx, ApplicationDbContext db, Playlist.CreateDto input) => {
     User? user = await TryAuthorize(ctx, db);
     if (user is null)
