@@ -189,6 +189,7 @@ public class Track {
         public uint trackCount { get; }
         public uint discNumber { get; }
         public uint discCount { get; }
+        public bool hasLyrics { get; }
         public string listen { get; }
 
         public GetDto(Track track) {
@@ -203,6 +204,7 @@ public class Track {
             trackCount = track.trackCount;
             discNumber = track.discNumber;
             discCount = track.discCount;
+            hasLyrics = !string.IsNullOrWhiteSpace(track.lyrics);
             listen = track.listen;
         }
     }
