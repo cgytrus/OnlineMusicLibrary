@@ -183,6 +183,7 @@ public class Track {
         public string artist { get; }
         public string album { get; }
         public string albumArtist { get; }
+        public bool hasArt { get; }
         public uint year { get; }
         public string genre { get; }
         public uint trackNumber { get; }
@@ -191,6 +192,7 @@ public class Track {
         public uint discCount { get; }
         public bool hasLyrics { get; }
         public string listen { get; }
+        public string download { get; }
 
         public GetDto(Track track) {
             id = track.id;
@@ -198,6 +200,7 @@ public class Track {
             artist = track.artist;
             album = track.album;
             albumArtist = track.albumArtist;
+            hasArt = track.HasArt();
             year = track.year;
             genre = track.genre;
             trackNumber = track.trackNumber;
@@ -206,6 +209,7 @@ public class Track {
             discCount = track.discCount;
             hasLyrics = !string.IsNullOrWhiteSpace(track.lyrics);
             listen = track.listen;
+            download = track.download;
         }
     }
 }
