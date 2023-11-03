@@ -19,11 +19,12 @@ public class Playlist {
     [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
     public class CreateDto {
         public required string title { get; init; }
+        public uint[]? tracks { get; init; }
 
         public Playlist ToPlaylist(string username) => new() {
             username = username,
             title = title,
-            tracks = ""
+            tracks = tracks is null ? "" : string.Join(',', tracks.Select(x => x.ToString()))
         };
     }
 
