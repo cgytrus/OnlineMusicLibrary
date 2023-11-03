@@ -185,7 +185,7 @@ playlistGroup.MapPost("/", async (HttpContext ctx, ApplicationDbContext db, Play
     if (user is null)
         return Results.Unauthorized();
 
-    Playlist playlist = input.ToPlaylist(user.username);
+    Playlist playlist = await input.ToPlaylist(db, user.username);
     db.playlists.Add(playlist);
     await db.SaveChangesAsync();
     return Results.Created($"/playlist/{playlist.id}", new Playlist.GetDto(db, playlist));
@@ -201,25 +201,7 @@ playlistGroup.MapPut("/{id}", async (HttpContext ctx, ApplicationDbContext db, u
     if (playlist.username != user.username)
         return Results.Unauthorized();
 
-    input.MergeInto(playlist);
-    await db.SaveChangesAsync();
-
-    return Results.NoContent();
-});
-playlistGroup.MapPut("/{id}/{trackId}", async (HttpContext ctx, ApplicationDbContext db, uint id, uint trackId) => {
-    User? user = await TryAuthorize(ctx, db);
-    if (user is null)
-        return Results.Unauthorized();
-
-    if (await db.playlists.FindAsync(id) is not { } playlist)
-        return Results.NotFound();
-
-    if (playlist.username != user.username)
-        return Results.Unauthorized();
-
-    playlist.tracks = string.IsNullOrWhiteSpace(playlist.tracks) ?
-        trackId.ToString() :
-        string.Join(',', playlist.tracks.Split(',').Append(trackId.ToString()).ToArray());
+    await input.MergeInto(db, playlist);
     await db.SaveChangesAsync();
 
     return Results.NoContent();
@@ -235,27 +217,10 @@ playlistGroup.MapDelete("/{id}", async (HttpContext ctx, ApplicationDbContext db
 
     if (await db.playlists.FindAsync(id) is not { } playlist)
         return Results.NotFound();
-
     if (playlist.username != user.username)
         return Results.Unauthorized();
 
     db.playlists.Remove(playlist);
-    await db.SaveChangesAsync();
-
-    return Results.NoContent();
-});
-playlistGroup.MapDelete("/{id}/{trackId}", async (HttpContext ctx, ApplicationDbContext db, uint id, uint trackId) => {
-    User? user = await TryAuthorize(ctx, db);
-    if (user is null)
-        return Results.Unauthorized();
-
-    if (await db.playlists.FindAsync(id) is not { } playlist)
-        return Results.NotFound();
-
-    if (playlist.username != user.username)
-        return Results.Unauthorized();
-
-    playlist.tracks = string.Join(',', playlist.tracks.Split(',').Where(x => x != trackId.ToString()));
     await db.SaveChangesAsync();
 
     return Results.NoContent();
