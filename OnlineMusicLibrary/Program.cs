@@ -28,6 +28,8 @@ WebApplication app = builder.Build();
 app.UseCors();
 
 RouteGroupBuilder userGroup = app.MapGroup("/user");
+userGroup.MapGet("/verify", async (HttpContext ctx, ApplicationDbContext db) =>
+    await TryAuthorize(ctx, db) is null ? Results.Text("Invalid token") : Results.Text(""));
 userGroup.MapGet("/{username}/tracks", (ApplicationDbContext db, string username) => {
     return Results.Ok(db.tracks
         .Where(x => x.username == username)
