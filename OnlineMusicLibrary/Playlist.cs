@@ -14,6 +14,24 @@ public class Playlist {
     public required string username { get; init; }
     public required string title { get; set; }
 
+    // ReSharper disable once SuggestBaseTypeForParameter
+    private async Task AddTracks(ApplicationDbContext db, uint[] tracks) {
+        uint skipped = 0;
+        for (uint i = 0; i < tracks.Length; i++) {
+            Track? track = await db.tracks.FindAsync(tracks[i]);
+            if (track is null) {
+                skipped++;
+                continue;
+            }
+            PlaylistTrack playlistTrack = new() {
+                position = i - skipped,
+                playlist = this,
+                track = track
+            };
+            db.playlistTracks.Add(playlistTrack);
+        }
+    }
+
     [UsedImplicitly]
     [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
     public class CreateDto {
@@ -25,22 +43,8 @@ public class Playlist {
                 username = username,
                 title = title
             };
-            if (tracks is null)
-                return playlist;
-            uint skipped = 0;
-            for (uint i = 0; i < tracks.Length; i++) {
-                Track? track = await db.tracks.FindAsync(tracks[i]);
-                if (track is null) {
-                    skipped++;
-                    continue;
-                }
-                PlaylistTrack playlistTrack = new() {
-                    position = i - skipped,
-                    playlist = playlist,
-                    track = track
-                };
-                db.playlistTracks.Add(playlistTrack);
-            }
+            if (tracks is not null)
+                await playlist.AddTracks(db, tracks);
             return playlist;
         }
     }
@@ -57,38 +61,26 @@ public class Playlist {
             if (tracks is null)
                 return;
             db.playlistTracks.RemoveRange(db.playlistTracks.Where(pt => pt.playlist == playlist));
-            uint skipped = 0;
-            for (uint i = 0; i < tracks.Length; i++) {
-                Track? track = await db.tracks.FindAsync(tracks[i]);
-                if (track is null) {
-                    skipped++;
-                    continue;
-                }
-                PlaylistTrack playlistTrack = new() {
-                    position = i - skipped,
-                    playlist = playlist,
-                    track = track
-                };
-                db.playlistTracks.Add(playlistTrack);
-            }
+            await playlist.AddTracks(db, tracks);
         }
     }
 
     [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
     public class GetDto {
-        public uint id { get; }
-        public string username { get; }
-        public string title { get; }
-        public IReadOnlyList<Track.GetDto> tracks { get; }
-        public GetDto(ApplicationDbContext db, Playlist playlist) {
-            id = playlist.id;
-            username = playlist.username;
-            title = playlist.title;
-            tracks = db.playlistTracks
-                .Where(tp => tp.playlist == playlist)
-                .OrderBy(t => t.position)
-                .Select(t => new Track.GetDto(t.track))
-                .ToList();
-        }
+        public required uint id { get; init; }
+        public required string username { get; init; }
+        public required string title { get; init; }
+        public required IReadOnlyList<Track.GetDto> tracks { get; init; }
+
+        public static async Task<GetDto> From(ApplicationDbContext db, Playlist playlist) => new() {
+            id = playlist.id,
+            username = playlist.username,
+            title = playlist.title,
+            tracks = await db.playlistTracks
+                .Where(pt => pt.playlist == playlist)
+                .OrderBy(pt => pt.position)
+                .Select(pt => new Track.GetDto(pt.track))
+                .ToListAsync()
+        };
     }
 }

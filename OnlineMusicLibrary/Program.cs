@@ -188,7 +188,7 @@ playlistGroup.MapPost("/", async (HttpContext ctx, ApplicationDbContext db, Play
     Playlist playlist = await input.ToPlaylist(db, user.username);
     db.playlists.Add(playlist);
     await db.SaveChangesAsync();
-    return Results.Created($"/playlist/{playlist.id}", new Playlist.GetDto(db, playlist));
+    return Results.Created($"/playlist/{playlist.id}", Playlist.GetDto.From(db, playlist));
 });
 playlistGroup.MapPut("/{id}", async (HttpContext ctx, ApplicationDbContext db, uint id, Playlist.UpdateDto input) => {
     User? user = await TryAuthorize(ctx, db);
@@ -208,7 +208,7 @@ playlistGroup.MapPut("/{id}", async (HttpContext ctx, ApplicationDbContext db, u
 });
 playlistGroup.MapGet("/{id}", async (ApplicationDbContext db, uint id) =>
     await db.playlists.FindAsync(id) is { } playlist ?
-        Results.Ok(new Playlist.GetDto(db, playlist)) :
+        Results.Ok(await Playlist.GetDto.From(db, playlist)) :
         Results.NotFound());
 playlistGroup.MapDelete("/{id}", async (HttpContext ctx, ApplicationDbContext db, uint id) => {
     User? user = await TryAuthorize(ctx, db);
