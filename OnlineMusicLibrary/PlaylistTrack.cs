@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace OnlineMusicLibrary;
 
-[PrimaryKey(nameof(position), nameof(playlistId))]
+[PrimaryKey(nameof(position), nameof(playlistId)), Index(nameof(playlistId))]
 public class PlaylistTrack {
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public required uint position { get; init; }
