@@ -8,8 +8,6 @@ using YoutubeDLSharp;
 
 using File = System.IO.File;
 
-await YoutubeDLSharp.Utils.DownloadBinaries();
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
@@ -46,6 +44,9 @@ if (app.Environment.IsDevelopment()) {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else {
+    await YoutubeDLSharp.Utils.DownloadBinaries();
+}
 
 app.UseCors();
 
@@ -70,6 +71,16 @@ userGroup.MapGet("/{username}/playlists", async (ApplicationDbContext db, string
 
 RouteGroupBuilder trackGroup = baseGroup.MapGroup("/track");
 trackGroup.MapPost("/", async (HttpContext ctx, ApplicationDbContext db, Track.CreateDto input) => {
+    User? user = await TryAuthorize(ctx, db);
+    if (user is null)
+        return Results.Unauthorized();
+
+    Track track = await input.ToTrack(user.username);
+    db.tracks.Add(track);
+    await db.SaveChangesAsync();
+    return Results.Created($"/track/{track.id}", new Track.GetDto(track));
+}).WithOpenApi();
+trackGroup.MapPost("/file", async (HttpContext ctx, ApplicationDbContext db, Track.CreateFileDto input) => {
     User? user = await TryAuthorize(ctx, db);
     if (user is null)
         return Results.Unauthorized();

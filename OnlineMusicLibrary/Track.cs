@@ -9,6 +9,10 @@ using Microsoft.EntityFrameworkCore;
 
 using SixLabors.ImageSharp.Formats.Jpeg;
 
+using TagLib;
+
+using File = System.IO.File;
+
 namespace OnlineMusicLibrary;
 
 [Index(nameof(username))]
@@ -43,12 +47,13 @@ public class Track {
 
     private const int MaxArtSize = 1200;
 
-    private async Task SaveArt(string base64) {
+    private Task SaveArt(string base64) => SaveArt(Convert.FromBase64String(base64));
+    private async Task SaveArt(byte[] bytes) {
         string? artDir = Path.GetDirectoryName(artPath);
         if (artDir is not null)
             Directory.CreateDirectory(artDir);
 
-        using Image image = Image.Load(Convert.FromBase64String(base64));
+        using Image image = Image.Load(bytes);
         // resize and crop the image
         image.Mutate(ctx => {
             int width = ctx.GetCurrentSize().Width;
@@ -117,6 +122,64 @@ public class Track {
             };
             if (!track.HasArt())
                 await track.SaveArt(art);
+            return track;
+        }
+    }
+
+    [UsedImplicitly]
+    [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
+    public class CreateFileDto {
+        public required string fileName { get; init; }
+        public required string file { get; init; }
+        public string? lyrics { get; init; }
+        public required string listen { get; init; }
+        public string? download { get; init; }
+
+        private class Base64ReadFile : TagLib.File.IFileAbstraction {
+            public string Name { get; }
+            public Stream ReadStream { get; }
+            public Stream? WriteStream => null;
+            public void CloseStream(Stream? stream) => stream?.Close();
+
+            public Base64ReadFile(string name, string base64) {
+                Name = name;
+                ReadStream = new MemoryStream(Convert.FromBase64String(base64), false);
+            }
+        }
+
+        public async Task<Track> ToTrack(string username) {
+            TagLib.File? file = TagLib.File.Create(new Base64ReadFile(fileName, this.file));
+            if (file is null)
+                throw new InvalidDataException("file is null");
+
+            string album = file.Tag.Album ?? file.Tag.Title ?? "<unknown>";
+            string albumArtist = file.Tag.AlbumArtists is null || file.Tag.AlbumArtists.Length == 0 ?
+                file.Tag.Performers is null || file.Tag.Performers.Length == 0 ? "<unknown>" :
+                    file.Tag.Performers[0] :
+                string.Join(" & ", file.Tag.AlbumArtists);
+
+            Track track = new() {
+                username = username,
+                title = file.Tag.Title ?? "<unknown>",
+                artist = file.Tag.Performers is null || file.Tag.Performers.Length == 0 ? "<unknown>" :
+                    string.Join(" & ", file.Tag.Performers),
+                album = album,
+                albumArtist = albumArtist,
+                albumHash = GetAlbumHash(album, albumArtist),
+                year = file.Tag.Year,
+                genre = file.Tag.JoinedGenres,
+                trackNumber = file.Tag.Track == 0 ? 1 : file.Tag.Track,
+                trackCount = file.Tag.TrackCount == 0 ? 1 : file.Tag.TrackCount,
+                discNumber = file.Tag.Disc == 0 ? 1 : file.Tag.Disc,
+                discCount = file.Tag.DiscCount == 0 ? 1 : file.Tag.DiscCount,
+                lyrics = lyrics ?? file.Tag.Lyrics ?? "",
+                listen = listen,
+                download = download ?? listen
+            };
+            IPicture? art = file.Tag.Pictures?.FirstOrDefault(p => p.Type == PictureType.FrontCover) ??
+                file.Tag.Pictures?.FirstOrDefault();
+            if (!track.HasArt() && art?.Data?.Data is not null)
+                await track.SaveArt(art.Data.Data);
             return track;
         }
     }
