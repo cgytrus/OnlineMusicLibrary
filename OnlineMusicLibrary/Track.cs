@@ -167,7 +167,7 @@ public class Track {
                 albumArtist = albumArtist,
                 albumHash = GetAlbumHash(album, albumArtist),
                 year = file.Tag.Year,
-                genre = file.Tag.JoinedGenres,
+                genre = file.Tag.JoinedGenres ?? "",
                 trackNumber = file.Tag.Track == 0 ? 1 : file.Tag.Track,
                 trackCount = file.Tag.TrackCount == 0 ? 1 : file.Tag.TrackCount,
                 discNumber = file.Tag.Disc == 0 ? 1 : file.Tag.Disc,
