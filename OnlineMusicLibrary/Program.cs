@@ -8,7 +8,7 @@ using YoutubeDLSharp;
 
 using File = System.IO.File;
 
-//await YoutubeDLSharp.Utils.DownloadBinaries();
+await YoutubeDLSharp.Utils.DownloadBinaries();
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
