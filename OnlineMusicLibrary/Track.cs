@@ -37,6 +37,7 @@ public class Track {
         .ToHexString(Crc32.Hash(Encoding.Unicode.GetBytes($"{album}{albumArtist}")))
         .ToLowerInvariant();
     private static string GetArtPath(string albumHash) => Path.Combine(
+        Environment.GetEnvironmentVariable("OML_DB_PATH") ??
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OnlineMusicLibrary",
         $"{albumHash}.jpg");
 
