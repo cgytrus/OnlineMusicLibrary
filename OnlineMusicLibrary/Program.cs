@@ -47,17 +47,30 @@ if (app.Environment.IsDevelopment()) {
     app.UseSwaggerUI();
 }
 else {
-    await YoutubeDLSharp.Utils.DownloadBinaries();
+    // nugert my beloved
+    if (!File.Exists(Path.Combine(Utils.FfmpegBinaryName)))
+        await Utils.DownloadFFmpeg();
+    if (!File.Exists(Path.Combine(Utils.FfprobeBinaryName)))
+        await Utils.DownloadFFprobe();
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
-        string ytdlpPath = YoutubeDLSharp.Utils.GetFullPath(YoutubeDLSharp.Utils.YtDlpBinaryName);
-        string ffmpegPath = YoutubeDLSharp.Utils.GetFullPath(YoutubeDLSharp.Utils.FfmpegBinaryName);
-        string ffprobePath = YoutubeDLSharp.Utils.GetFullPath(YoutubeDLSharp.Utils.FfprobeBinaryName);
+        if (!File.Exists(Path.Combine("yt-dlp_linux"))) {
+            const string ytdlpDownloadUrl = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux";
+            File.WriteAllBytes(Path.Combine(Directory.GetCurrentDirectory(), Path.GetFileName(ytdlpDownloadUrl)),
+                await new HttpClient().GetByteArrayAsync(ytdlpDownloadUrl));
+        }
+        string ytdlpPath = Utils.GetFullPath("yt-dlp_linux");
+        string ffmpegPath = Utils.GetFullPath(Utils.FfmpegBinaryName);
+        string ffprobePath = Utils.GetFullPath(Utils.FfprobeBinaryName);
         if (File.Exists(ytdlpPath))
             File.SetUnixFileMode(ytdlpPath, File.GetUnixFileMode(ytdlpPath) | UnixFileMode.UserExecute);
         if (File.Exists(ffmpegPath))
             File.SetUnixFileMode(ffmpegPath, File.GetUnixFileMode(ffmpegPath) | UnixFileMode.UserExecute);
         if (File.Exists(ffprobePath))
             File.SetUnixFileMode(ffprobePath, File.GetUnixFileMode(ffprobePath) | UnixFileMode.UserExecute);
+    }
+    else {
+        if (!File.Exists(Path.Combine(Utils.YtDlpBinaryName)))
+            await Utils.DownloadYtDlp();
     }
 }
 
@@ -150,6 +163,8 @@ trackGroup.MapGet("/{id}/download", async (HttpContext ctx, ApplicationDbContext
         return Results.NotFound();
 
     YoutubeDL ytdl = new(1);
+    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        ytdl.YoutubeDLPath = "yt-dlp_linux";
 
     RunResult<string> res = await ytdl.RunAudioDownload(track.download);
     if (!res.Success)
