@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 using Microsoft.EntityFrameworkCore;
 
 using OnlineMusicLibrary;
@@ -46,6 +48,17 @@ if (app.Environment.IsDevelopment()) {
 }
 else {
     await YoutubeDLSharp.Utils.DownloadBinaries();
+    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+        string ytdlpPath = YoutubeDLSharp.Utils.GetFullPath(YoutubeDLSharp.Utils.YtDlpBinaryName);
+        string ffmpegPath = YoutubeDLSharp.Utils.GetFullPath(YoutubeDLSharp.Utils.FfmpegBinaryName);
+        string ffprobePath = YoutubeDLSharp.Utils.GetFullPath(YoutubeDLSharp.Utils.FfprobeBinaryName);
+        if (File.Exists(ytdlpPath))
+            File.SetUnixFileMode(ytdlpPath, File.GetUnixFileMode(ytdlpPath) | UnixFileMode.UserExecute);
+        if (File.Exists(ffmpegPath))
+            File.SetUnixFileMode(ffmpegPath, File.GetUnixFileMode(ffmpegPath) | UnixFileMode.UserExecute);
+        if (File.Exists(ffprobePath))
+            File.SetUnixFileMode(ffprobePath, File.GetUnixFileMode(ffprobePath) | UnixFileMode.UserExecute);
+    }
 }
 
 app.UseCors();
