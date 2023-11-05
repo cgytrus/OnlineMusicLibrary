@@ -7,7 +7,7 @@ FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
 COPY ["OnlineMusicLibrary/OnlineMusicLibrary.csproj", "OnlineMusicLibrary/"]
 RUN dotnet restore "OnlineMusicLibrary/OnlineMusicLibrary.csproj"
-COPY . .
+COPY OnlineMusicLibrary/. ./OnlineMusicLibrary
 WORKDIR "/src/OnlineMusicLibrary"
 RUN dotnet build "OnlineMusicLibrary.csproj" -c Release -o /app/build
 
